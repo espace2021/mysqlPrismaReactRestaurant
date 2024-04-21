@@ -1,0 +1,96 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model categorie {
+  id       Int        @id @default(autoincrement())
+  desCat   String?    @db.VarChar(30)
+  imageCat String?    @db.VarChar(250)
+  products products[]
+}
+
+model cmd {
+  id              Int       @id @default(autoincrement())
+  codeEmp         Int
+  dateCmd         String    @db.VarChar(50)
+  prixTotalCmd    Float
+  tableNumber     Int?
+  status          Int
+  nomClient       String    @db.VarChar(50)
+  depuis          String    @db.VarChar(50)
+  verifiedByAdmin String    @db.VarChar(50)
+  employe         employe   @relation(fields: [codeEmp], references: [id], onUpdate: Restrict, map: "cmd_ibfk_1")
+  prodcmd         prodcmd[]
+
+  @@index([codeEmp], map: "codeEmp")
+}
+
+model employe {
+  id           Int     @id @default(autoincrement())
+  matriculeEmp String  @db.VarChar(10)
+  nomPrenom    String? @db.VarChar(40)
+  adresse      String? @db.VarChar(40)
+  contact      String? @db.VarChar(30)
+  tel          String? @db.VarChar(15)
+  fonction     String? @db.VarChar(20)
+  login        String? @db.VarChar(10)
+  motPasse     String? @db.VarChar(10)
+  caisse       Int?    @default(1)
+  cmd          cmd[]
+}
+
+model ligne_tickets {
+  id         Int      @id @default(autoincrement())
+  qte        Decimal  @db.Decimal(5, 0)
+  prix       Int
+  produit_id Int
+  ticket_id  Int
+  products   products @relation(fields: [produit_id], references: [id], onUpdate: Restrict, map: "ligne_tickets_ibfk_1")
+  tickets    tickets  @relation(fields: [ticket_id], references: [id], onUpdate: Restrict, map: "ligne_tickets_ibfk_2")
+
+  @@index([produit_id], map: "ligne_tickets_ibfk_1")
+  @@index([ticket_id], map: "ligne_tickets_ibfk_2")
+}
+
+model prodcmd {
+  id       Int      @id @default(autoincrement())
+  codeProd Int
+  codeCmd  Int
+  qte      Int
+  prix     Float    @default(0)
+  tauxTVA  Float    @default(0)
+  cmd      cmd      @relation(fields: [codeCmd], references: [id], onUpdate: Restrict, map: "prodcmd_ibfk_1")
+  products products @relation(fields: [codeProd], references: [id], onUpdate: Restrict, map: "prodcmd_ibfk_2")
+
+  @@index([codeCmd], map: "codeCmd")
+  @@index([codeProd], map: "codeProd")
+}
+
+model products {
+  id                 Int             @id @default(autoincrement()) 
+  title              String?         @db.VarChar(17)
+  image              String?         @db.VarChar(102)
+  previewDescription String?         @db.VarChar(112)
+  detailDescription  String?         @db.VarChar(250)
+  price              Decimal         @db.Decimal(4, 0)
+  qtestock           Int
+  codeCategorie      Int
+  ligne_tickets      ligne_tickets[]
+  prodcmd            prodcmd[]
+  categorie          categorie       @relation(fields: [codeCategorie], references: [id], onUpdate: Restrict, map: "products_ibfk_1")
+
+  @@index([codeCategorie], map: "codeCategorie")
+}
+
+model tickets {
+  id            Int             @id @default(autoincrement())
+  numero        Int
+  dateticket    DateTime        @db.Date
+  client        String          @db.VarChar(50)
+  ligne_tickets ligne_tickets[]
+}
